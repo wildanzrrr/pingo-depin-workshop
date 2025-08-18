@@ -77,4 +77,46 @@ contract TokensTest is Test {
         assertEq(usdc.balanceOf(address(0x3)), 0, "No USDC should be transferred");
         vm.stopPrank();
     }
+
+    function testTransferFromWithClosedForTrade() public {
+        // Set trading closed
+        vm.startPrank(ADMIN);
+        usdc.setOpenForTrade(false);
+        vm.stopPrank();
+
+        // Mint tokens to USER
+        vm.startPrank(USER);
+        usdc.mint();
+        usdc.approve(address(this), 10_000_000);
+        vm.stopPrank();
+
+        // Attempt transferFrom as contract (spender)
+        uint256 beforeFrom = usdc.balanceOf(USER);
+        uint256 beforeTo = usdc.balanceOf(address(0x3));
+        bool success = usdc.transferFrom(USER, address(0x3), 10_000_000);
+        require(!success, "transferFrom should have failed");
+        assertEq(usdc.balanceOf(USER), beforeFrom, "Sender balance should not change");
+        assertEq(usdc.balanceOf(address(0x3)), beforeTo, "Recipient balance should not change");
+    }
+
+    function testTransferFromWithOpenForTrade() public {
+        // Set trading open
+        vm.startPrank(ADMIN);
+        usdc.setOpenForTrade(true);
+        vm.stopPrank();
+
+        // Mint tokens to USER
+        vm.startPrank(USER);
+        usdc.mint();
+        usdc.approve(address(this), 10_000_000);
+        vm.stopPrank();
+
+        // Attempt transferFrom as contract (spender)
+        uint256 beforeFrom = usdc.balanceOf(USER);
+        uint256 beforeTo = usdc.balanceOf(address(0x3));
+        bool success = usdc.transferFrom(USER, address(0x3), 10_000_000);
+        require(success, "transferFrom should have succeeded");
+        assertEq(usdc.balanceOf(USER), beforeFrom - 10_000_000, "Sender balance should decrease");
+        assertEq(usdc.balanceOf(address(0x3)), beforeTo + 10_000_000, "Recipient balance should increase");
+    }
 }

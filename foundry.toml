@@ -5,7 +5,7 @@ block_timestamp = 1_738_368_000  # Feb 1, 2025 at 00:00 GMT
 block_gas_limit = 3000000000     # 3 billion gas limit
 build_info = true
 bytecode_hash = "none"
-evm_version = "shanghai"
+evm_version = "cancun"
 extra_output = ["storageLayout"]
 fuzz = { runs = 1_000 }
 gas_reports = ["*"]
