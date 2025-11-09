@@ -1,128 +1,168 @@
-# TokenMinds Solidity Template
+<!--
+ Copyright (c) 2025 wildanzrrr
+ 
+ This software is released under the MIT License.
+ https://opensource.org/licenses/MIT
+-->
 
-Fill project description here.
+# DeAI - AI Task Processing 
 
-## Introduction
+A decentralized physical infrastructure network (DePIN) that coordinates AI nodes to process tasks using OpenAI's GPT models.
 
-Fill project introduction here
+![DePIN Network Showcase](docs/Screenshot%20at%20Nov%2009%2022-56-26.png)
 
-## Features
+## 🌟 Features
 
-Fill project features here.
+- **Control Plane Architecture**: Centralized coordinator manages task distribution
+- **RabbitMQ Message Broker**: Reliable task queuing with round-robin distribution
+- **AI Task Processing**: Nodes use OpenAI GPT to answer questions
+- **Blockchain Integration**: Smart contracts on Ethereum/Anvil for task management
+- **Docker Orchestration**: Easy deployment with Docker Compose
+- **Scalable**: Add/remove nodes dynamically without downtime
 
-## Installation
+## 🏗️ Architecture
 
-### Prerequisites
+```
+Blockchain → Control Plane → RabbitMQ → AI Nodes (Round Robin)
+                ↓                ↓
+         Task Coordination   Fair Distribution
+```
 
-- [Foundry](https://book.getfoundry.sh/getting-started/installation)
-- [Git](https://git-scm.com/)
-- [Make](https://www.gnu.org/software/make/)
+## 📋 Prerequisites
 
-### Setup Instructions
+1. **VS Code** with [Dev Container extension](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
+   
+   ![Dev Container Extension](docs/Screenshot%20at%20Nov%2009%2022-44-08.png)
 
-1. **Clone the repository**
+2. **Docker Desktop** - [Download here](https://www.docker.com/products/docker-desktop/)
 
-   ```bash
-   git clone <repository-url>
-   cd smart-contract
-   ```
+## 🚀 Quick Start
 
-2. **Install dependencies**
-
-   ```bash
-   # Install Foundry dependencies
-   forge install
-   ```
-
-3. **Install Foundry submodules**
-   ```bash
-   git submodule update --init --recursive
-   ```
-
-## Configuration
-
-### Environment Setup
-
-1. **Copy the environment template**
-
-   ```bash
-   cp .env.example .env
-   ```
-
-2. **Fill in the environment variables**
-
-## Usage
-
-### Development Commands
-
-#### Building
+### 1. Clone the Repository
 
 ```bash
-# Clean and build contracts
-make clean
-make build
-
-# Or use Foundry directly
-forge build
+git clone https://github.com/wildanzrrr/pingo-depin-workshop
+cd workshop-depin
 ```
 
-#### Testing
+### 2. Open in Dev Container
+
+In VS Code:
+- Press `F1` or `Ctrl+Shift+P` (Cmd+Shift+P on Mac)
+- Select **"Dev Containers: Reopen in Container"**
+
+![Reopen in Container](docs/Screenshot%20at%20Nov%2009%2022-43-09.png)
+
+Wait for the container to build (first time takes a few minutes).
+
+### 3. Configure Environment
 
 ```bash
-# Run all tests
-make test
+# Copy the example environment file
+cp .env.example .env
 
-# Run tests with gas reporting
-forge test --gas-report
-
-# Run specific test file
-forge test --match-path test/w3gg.t.sol
+# Edit .env and add your OpenAI API key
+nano .env
 ```
 
-#### Coverage
+Update this line in `.env`:
+```bash
+OPENAI_API_KEY=sk-your-actual-api-key-here
+```
+
+Get your API key from: https://platform.openai.com/api-keys
+
+### 4. Start Anvil Blockchain
+
+Open a new terminal in VS Code and run:
 
 ```bash
-# Generate coverage report
-make testCoverage
-
-# Generate HTML coverage report
-make testCoverageReport
+anvil --host 0.0.0.0
 ```
 
-#### Code Formatting
+> ⚠️ **Important**: Keep this terminal running! The `--host 0.0.0.0` flag is required for Docker containers to connect.
+
+### 5. Run Setup Script
+
+Open another terminal and run:
 
 ```bash
-forge fmt
+./setup.sh
 ```
 
-### Deployment
+This will:
+- ✅ Deploy the smart contract
+- ✅ Build Docker images
+- ✅ Start RabbitMQ, Control Plane, and 2 AI Nodes
+- ✅ Verify all services are running
 
-#### Deploy Mock Token (for testing)
+### 6. Monitor Logs
+
+Watch the Control Plane processing tasks:
 
 ```bash
-make deployMockToken
+docker-compose logs -f control-plane
 ```
 
-## Project Structure
+Or watch all services:
 
-```
-smart-contract/
-├── src/                          # Smart contract source code
-│   └── erc20mock.sol           # Mock ERC20 for testing
-├── script/                      # Deployment scripts
-│   └── deployERC20Mock.sol       # Deploy ERC20 mock
-├── test/                        # Test files
-│   └── token.t.sol             # Token-related tests
-├── coverage/                    # Coverage reports
-├── foundry.toml                 # Foundry configuration
-├── Makefile                     # Deployment automation
+```bash
+docker-compose logs -f
 ```
 
-## Development Tools
+### 7. Create a Task
 
-- **Foundry**: Smart contract development framework
-- **VS Code**: Recommended IDE with Solidity extensions
+Open a new terminal and create your first task:
 
-## License
+```bash
+./create-tasks.sh "What is blockchain technology?"
+```
 
-MIT License - see the [LICENSE](LICENSE) file for details.
+Watch the logs to see:
+1. Control Plane detects the task
+2. Task is published to RabbitMQ
+3. A node picks up the task
+4. AI processes the question
+5. Result is submitted to blockchain
+
+
+## 🎯 Common Commands
+
+```bash
+# View all logs
+docker-compose logs -f
+
+# View specific service logs
+docker-compose logs -f node-1
+docker-compose logs -f control-plane
+
+# Add more nodes
+./add-node.sh 3 0x<private-key>
+
+# List all running nodes
+./list-nodes.sh
+
+# Remove a node
+./remove-node.sh 3
+
+# Stop all services
+docker-compose down
+
+# Restart services
+docker-compose restart
+```
+
+## 🎓 How It Works
+
+1. **Task Creation**: Owner calls `addTask()` on smart contract
+2. **Event Detection**: Control Plane listens for `TaskCreated` events
+3. **Queue Distribution**: Task is published to RabbitMQ queue
+4. **Node Assignment**: RabbitMQ distributes to next available node (round-robin)
+5. **AI Processing**: Node uses OpenAI to generate answer
+6. **Blockchain Submit**: Node submits result to smart contract
+7. **Result Report**: Node reports completion to Control Plane
+
+
+## 📝 License
+
+MIT License - see [LICENSE](LICENSE) file for details.

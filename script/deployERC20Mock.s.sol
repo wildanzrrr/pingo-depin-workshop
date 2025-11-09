@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.29;
+pragma solidity ^0.8.20;
 
 import { ERC20Mock } from "../src/erc20mock.sol";
 import { Script } from "forge-std/Script.sol";
-import "forge-std/console.sol";
+import { console } from "forge-std/console.sol";
 
 contract DeployERC20Mock is Script {
     function run() public {

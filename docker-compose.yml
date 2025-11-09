@@ -1,0 +1,102 @@
+services:
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: depin-rabbitmq
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - depin-network
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+
+  # Control Plane - Coordinator
+  control-plane:
+    build:
+      context: ./control-plane
+      dockerfile: Dockerfile
+    container_name: depin-control-plane
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      - RPC_URL=${RPC_URL:-http://host.docker.internal:8545}
+      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    networks:
+      - depin-network
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Node 1
+  node-1:
+    build:
+      context: ./listener
+      dockerfile: Dockerfile
+    container_name: depin-node-1
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      control-plane:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      - NODE_ID=node-1
+      - NODE_NAME=AI_Node_1
+      - NODE_PRIVATE_KEY=${NODE_PRIVATE_KEY_1}
+      - RPC_URL=${RPC_URL:-http://host.docker.internal:8545}
+      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    networks:
+      - depin-network
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Node 2
+  node-2:
+    build:
+      context: ./listener
+      dockerfile: Dockerfile
+    container_name: depin-node-2
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      control-plane:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      - NODE_ID=node-2
+      - NODE_NAME=AI_Node_2
+      - NODE_PRIVATE_KEY=${NODE_PRIVATE_KEY_2}
+      - RPC_URL=${RPC_URL:-http://host.docker.internal:8545}
+      - CONTRACT_ADDRESS=${CONTRACT_ADDRESS}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - RABBITMQ_URL=amqp://guest:guest@rabbitmq:5672
+    networks:
+      - depin-network
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+networks:
+  depin-network:
+    driver: bridge
+
+volumes:
+  rabbitmq-data:

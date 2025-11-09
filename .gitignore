@@ -5,14 +5,40 @@ out/
 # Ignores development broadcast logs
 broadcast/
 
-# Docs
-docs/
 
 # Dotenv file
 .env
+.env.*
+!.env.example
 
 # node_modules
 node_modules/
+listener/node_modules/
+listener/dist/
+listener/package-lock.json
 
 # Coverage
 coverage/
+.coverage_data/
+
+# Deployment files
+deployment.txt
+*.txt
+!remappings.txt
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
